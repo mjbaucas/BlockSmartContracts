@@ -1,0 +1,12 @@
+<html>
+    <body>
+        <h1>Smart Contract Network</h1>
+        <h3>Blocks</h3>
+            {% for block in blockchain %}
+                {% for key, item  in block.items() %}
+                    {{key}} : {{item}}</br>
+                {% endfor %}
+                </br>
+            {% endfor %}
+    </body>
+</html>
