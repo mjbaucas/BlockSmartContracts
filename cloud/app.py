@@ -11,7 +11,7 @@ sys.path.append('../blockchain')
 
 from blockchain.private import Chain as PrivateBlockChain
 
-contract_length = 100
+contract_length = 1000
 
 private_chain = PrivateBlockChain()
 counter = 2
@@ -33,6 +33,8 @@ for x in range(0, int(contract_length)):
         private_chain.gen_next_block("temp", temp_blockchain)
         counter = 0
         temp_blockchain = []
+
+print(len(temp_list))
 
 @app.route('/', methods=['GET'])
 def get_info():
@@ -63,10 +65,8 @@ def request_access_list():
 def send_data_list():
     response = request.get_json()
 
-    found = False
-    for item in temp_list[::-1]:
-        if(item['source'] == response['source'] and item['destination'] == response['destination'] and item['allow'] == True and response['password'] == "temp"):
-            found = True
+    if(response['password'] == "temp"):
+        found = True
 
     return {"verified": found}, 200
 

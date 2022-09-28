@@ -7,16 +7,23 @@ import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.example.smartcontractwearos.databinding.ActivityMainBinding;
+
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
@@ -32,6 +39,7 @@ public class MainActivity extends Activity {
     private int COUNTER = 0;
     private int TIME = 30000;
     private boolean CONNECTED = false;
+    private int CONFIGURATION = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +55,26 @@ public class MainActivity extends Activity {
             StrictMode.setThreadPolicy(policy);
         }
 
+        binding.blockchainConf.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b == true) {
+                    binding.averageValue.setText("Blockchain");
+                    CONFIGURATION = 0;
+                }
+            }
+        });
+
+        binding.listConf.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b == true) {
+                    binding.averageValue.setText("List");
+                    CONFIGURATION = 1;
+                }
+            }
+        });
+
         binding.connectButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
@@ -56,7 +84,7 @@ public class MainActivity extends Activity {
                     long start = SystemClock.elapsedRealtime();
 
                     try {
-                        TCP_SERVER_HOST = "192.168.2.25";
+                        TCP_SERVER_HOST = "192.168.2.35";
                         TCP_SERVER_PORT = 5000;
 
                         if (TCP_SERVER_HOST != null && TCP_SERVER_PORT != -1) {
@@ -67,7 +95,11 @@ public class MainActivity extends Activity {
                                         long current = SystemClock.elapsedRealtime();
                                         while (current - start < TIME) {
                                             current = SystemClock.elapsedRealtime();
-                                            runTCPClient();
+                                            if (CONFIGURATION == 0) {
+                                                runTCPClient();
+                                            } else if (CONFIGURATION == 1) {
+                                                runAPIClient();
+                                            }
                                         }
 
                                         runOnUiThread(new Runnable() {
@@ -135,5 +167,72 @@ public class MainActivity extends Activity {
             e.printStackTrace();
         }
     }
+
+    public void runAPIClient(){
+            try {
+                long start = SystemClock.elapsedRealtime();
+                URL requestURL = new URL("http://192.168.2.25:3000/list/request");
+                HttpURLConnection conn1 = (HttpURLConnection) requestURL.openConnection();
+                conn1.setRequestMethod("POST");
+                conn1.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn1.setRequestProperty("Accept","application/json;charset=UTF-8");
+                conn1.setRequestProperty("X-Api-Key", "");
+                conn1.setDoOutput(true);
+                conn1.setDoInput(true);
+
+                JSONObject jsonRequestParam = new JSONObject();
+                jsonRequestParam.put("source", "galaxy");
+                jsonRequestParam.put("destination", "cloud");
+                //Log.i("JSON", jsonParam.toString());
+                DataOutputStream os1 = new DataOutputStream(conn1.getOutputStream());
+                os1.writeBytes(jsonRequestParam.toString());
+
+                os1.flush();
+                os1.close();
+
+                Log.i("REQUEST_STATUS", String.valueOf(conn1.getResponseCode()));
+                //Log.i("MSG" , conn1.getResponseMessage());
+
+                conn1.disconnect();
+
+                URL sendURL = new URL("http://192.168.2.25:3000/list/send");
+                HttpURLConnection conn2 = (HttpURLConnection) sendURL.openConnection();
+                conn2.setRequestMethod("POST");
+                conn2.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn2.setRequestProperty("Accept","application/json;charset=UTF-8");
+                conn2.setRequestProperty("X-Api-Key", "");
+                conn2.setDoOutput(true);
+                conn2.setDoInput(true);
+
+                JSONObject jsonSendParam = new JSONObject();
+                jsonSendParam.put("source", "galaxy");
+                jsonSendParam.put("destination", "cloud");
+                jsonSendParam.put("password", "temp");
+                //Log.i("JSON", jsonParam.toString());
+                DataOutputStream os2 = new DataOutputStream(conn2.getOutputStream());
+                os2.writeBytes(jsonSendParam.toString());
+
+                os2.flush();
+                os2.close();
+
+                Log.i("SEND_STATUS", String.valueOf(conn2.getResponseCode()));
+                //Log.i("MSG" , conn2.getResponseMessage());
+
+                conn2.disconnect();
+                long end = SystemClock.elapsedRealtime();
+                AVERAGE_TIME = AVERAGE_TIME + (end - start);
+                COUNTER++;
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(new Runnable() {
+                    String tempString = "Error: " + e.toString();
+                    @Override
+                    public void run() {
+                        binding.averageValue.setText(tempString);
+                    }
+                });
+            }
+    }
+
 
 }

@@ -58,34 +58,31 @@ while True:
     delta = 0.0
     start = datetime.datetime.now()
     if mode == 0:
-        if private_chain.search_smart_contracts(message[0], message[1]):
-            data = {'source': message[0], 'destination': message[1], 'data': 'normal'}
-            x = requests.post(blockchain_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
-            elapsed = x.elapsed.total_seconds()
-            print(x.text)
-            print(elapsed)
-            end = datetime.datetime.now()
-            delta = int((end-start).total_seconds()*1000)
-            total+=delta
-            counter+=1
+        data = {'source': message[0], 'destination': message[1], 'data': 'normal'}
+        x = requests.post(blockchain_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
+        elapsed = x.elapsed.total_seconds()
+        print(x.text)
+        print(elapsed)
+        end = datetime.datetime.now()
+        delta = int((end-start).total_seconds()*1000)
+        total+=delta
+        counter+=1
     elif mode == 1:
-        for item in temp_list[::-1]:
-            if(item['source'] == message[0] and item['destination'] == message[1] and item['allow'] == True):
-                data = {'source': message[0], 'destination': message[1]}
-                x = requests.post(list_verify_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
-                elapsed_request = x.elapsed.total_seconds()
-                response = json.loads(x.text)
-                if response["verified"] == True and response["password"]:
-                    password = response["password"]
-                    data = {'source': message[0], 'destination': message[1], 'password': password, 'data': 'normal'}
-                    y = requests.post(list_send_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
-                    elapsed_send= y.elapsed.total_seconds()
-                print(y.text)
-                print(elapsed_send + elapsed_request)
-                end = datetime.datetime.now()
-                delta = int((end-start).total_seconds()*1000)
-                total+=delta
-                counter+=1
+        data = {'source': message[0], 'destination': message[1]}
+        x = requests.post(list_verify_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
+        elapsed_request = x.elapsed.total_seconds()
+        response = json.loads(x.text)
+        if response["verified"] == True and response["password"]:
+            password = response["password"]
+            data = {'source': message[0], 'destination': message[1], 'password': password, 'data': 'normal'}
+            y = requests.post(list_send_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
+            elapsed_send= y.elapsed.total_seconds()
+        print(y.text)
+        print(elapsed_send + elapsed_request)
+        end = datetime.datetime.now()
+        delta = int((end-start).total_seconds()*1000)
+        total+=delta
+        counter+=1
                 
     msg = str(delta)
     send_msg(conn, bytearray(msg.encode()))
