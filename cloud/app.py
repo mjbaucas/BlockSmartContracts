@@ -11,7 +11,7 @@ sys.path.append('../blockchain')
 
 from blockchain.private import Chain as PrivateBlockChain
 
-contract_length = 1000
+contract_length = 1000000
 
 private_chain = PrivateBlockChain()
 counter = 2
