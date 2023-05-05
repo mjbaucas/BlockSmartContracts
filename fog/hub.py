@@ -58,7 +58,7 @@ while True:
     delta = 0.0
     start = datetime.datetime.now()
     if mode == 0:
-        data = {'source': message[0], 'destination': message[1], 'data': 'normal'}
+        data = {'source': message[0], 'destination': message[1], 'data': message[2]}
         x = requests.post(blockchain_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
         elapsed = x.elapsed.total_seconds()
         print(x.text)
@@ -74,7 +74,7 @@ while True:
         response = json.loads(x.text)
         if response["verified"] == True and response["password"]:
             password = response["password"]
-            data = {'source': message[0], 'destination': message[1], 'password': password, 'data': 'normal'}
+            data = {'source': message[0], 'destination': message[1], 'password': password, 'data': message[2]}
             y = requests.post(list_send_url, json=data, headers={'Content-Type': 'application/json', 'X-Api-Key' : ''})
             elapsed_send= y.elapsed.total_seconds()
         print(y.text)

@@ -7,10 +7,14 @@ import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.smartcontractwearos.databinding.ActivityMainBinding;
 
@@ -18,17 +22,18 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
-public class MainActivity extends Activity {
-
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private TextView mTextView;
     private ActivityMainBinding binding;
 
@@ -41,12 +46,31 @@ public class MainActivity extends Activity {
     private boolean CONNECTED = false;
     private int CONFIGURATION = 0;
 
+    private int SIZEOFBLOCK = 3650;
+    private String data1K;
+    private String data2K;
+    private String data4K;
+    private String data8K;
+    private String data16K;
+    private String data = "";
+    private static final String[] sizes = {"1K", "2K", "4K", "8K", "16K"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        data1K = generateData(1024);
+        data2K = generateData(2048);
+        data4K = generateData(4096);
+        data8K = generateData(8192);
+        data16K = generateData(16384);
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, sizes);
+        binding.selectSize.setAdapter(adapter);
+        binding.selectSize.setOnItemSelectedListener(this);
 
         mTextView = binding.titleText;
 
@@ -139,7 +163,7 @@ public class MainActivity extends Activity {
             DataOutputStream dataOut = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()));
 
             long start = SystemClock.elapsedRealtime();
-            String outMsg = "galaxy_cloud";
+            String outMsg = "galaxy_cloud_" + data;
             dataOut.writeInt(outMsg.length());
             dataOut.writeBytes(outMsg);
             dataOut.flush();
@@ -208,6 +232,7 @@ public class MainActivity extends Activity {
                 jsonSendParam.put("source", "galaxy");
                 jsonSendParam.put("destination", "cloud");
                 jsonSendParam.put("password", "temp");
+                jsonRequestParam.put("data", data);
                 //Log.i("JSON", jsonParam.toString());
                 DataOutputStream os2 = new DataOutputStream(conn2.getOutputStream());
                 os2.writeBytes(jsonSendParam.toString());
@@ -220,6 +245,7 @@ public class MainActivity extends Activity {
 
                 conn2.disconnect();
                 long end = SystemClock.elapsedRealtime();
+                Log.i("TIME", String.valueOf(end-start));
                 AVERAGE_TIME = AVERAGE_TIME + (end - start);
                 COUNTER++;
             } catch (Exception e) {
@@ -234,5 +260,37 @@ public class MainActivity extends Activity {
             }
     }
 
+    private String generateData(int size) {
+        String temp_string = "";
+        for (int i = 0; i <= size - 1; i++) {
+            temp_string = temp_string + "x";
+        }
+        return temp_string;
+    }
 
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+        switch (position) {
+            case 0:
+                data = data1K;
+                break;
+            case 1:
+                data = data2K;
+                break;
+            case 2:
+                data = data4K;
+                break;
+            case 3:
+                data = data8K;
+                break;
+            case 4:
+                data = data16K;
+                break;
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
 }
